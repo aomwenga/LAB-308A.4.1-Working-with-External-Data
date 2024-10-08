@@ -21,6 +21,35 @@ const API_KEY = "";
  *  - Each option should display text equal to the name of the breed.
  * This function should execute immediately.
  */
+async function initialLoad() {
+  try {
+    // list of breeds from the Cat API
+    let response = await fetch("https://api.thecatapi.com/v1/breeds", {
+      headers: {
+        // API and key
+        "x-api-key":
+          "live_7JHK2hfszqskVylVAVpPIPRyPADDs6zzCDz1mNvlaD1H6wHVhnBVT4rNKXOiojoD",
+      },
+    });
+    let breeds = await response.json(); // Parse the response to JSON
+
+    // create <option> elements for breeds
+    breeds.forEach((breed) => {
+      const option = document.createElement("option");
+      // value attribute equal to the id of the breed
+      option.value = breed.id;
+      // display text equal to the name of the breed
+      option.textContent = breed.name;
+      // append to the breedSelect dropdown
+      breedSelect.appendChild(option);
+    });
+  } catch (err) {
+    console.error("Error loading breeds:", err); // Log errors if any
+  }
+}
+
+// This function should execute immediately.
+initLoad();
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
@@ -34,8 +63,46 @@ const API_KEY = "";
  *  - Feel free to edit index.html and styles.css to suit your needs, but be careful!
  *  - Remember that functionality comes first, but user experience and design are important.
  * - Each new selection should clear, re-populate, and restart the Carousel.
- * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
+function breedSelectEventHandler() {
+  breedSelect.addEventListener("change", async (event) => {
+    const selectedBreedId = event.target.value; // Get selected breed ID
+
+    try {
+      // - Retrieve information on the selected breed from the cat API using fetch().
+      let response = await fetch(
+        `https://api.thecatapi.com/v1/images/search?breed_ids=${selectedBreedId}&limit=5`,
+        {
+          headers: {
+            "x-api-key": API_KEY,
+          },
+        }
+      );
+      let images = await response.json(); // Ensure multiple images are received
+
+      // - Clear, re-populate, and restart the Carousel.
+      carouselInner.innerHTML = ""; // Clear existing carousel items
+
+      // - For each object in the response array, create a new element for the carousel.
+      images.forEach((image) => {
+        const item = document.createElement("div");
+        item.classList.add("carousel-item");
+        item.innerHTML = `<img src="${image.url}" alt="Cat image" style="width:100%">`;
+        carouselInner.appendChild(item); // - Append each of these new elements to the carousel.
+      });
+
+      // - Use the other data you have been given to create an informational section within the infoDump element.
+      infoDump.innerHTML = `<h2>${selectedBreedId}</h2><p>Here are some images of the selected breed.</p>`;
+
+      // - Each new selection should clear, re-populate, and restart the Carousel.
+      if (carouselInner.firstChild) {
+        carouselInner.firstChild.classList.add("active"); // Set the first item as active to display
+      }
+    } catch (error) {
+      console.error("Error fetching breed data:", error);
+    }
+  });
+}
 
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
